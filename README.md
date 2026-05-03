@@ -1,6 +1,7 @@
 260503(수)
 - 프로젝트 개설
 
+```mermaid
 flowchart TB
     User[User Browser]
 
@@ -74,3 +75,4 @@ flowchart TB
     RDSB --> CW
 
     CW --> SNS
+```
