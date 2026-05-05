@@ -1,5 +1,7 @@
 260503(수)
 - 프로젝트 개설
+- 디렉토리 구성 및 모듈화
+- tier-3 도식 수정
 
 ```mermaid
 flowchart TB
@@ -19,10 +21,15 @@ flowchart TB
             subgraph PublicA[Public Subnet A]
                 ALB_A[ALB Node A]
                 NAT_A[NAT Gateway]
+                Bastion[Bastion Host]
+            end
+
+            subgraph PrivateWebA[Private Web Subnet A]
+                WebA[Web Server A<br/>Nginx]
             end
 
             subgraph PrivateAppA[Private App Subnet A]
-                EC2A[EC2 App Server A<br/>Nginx]
+                AppA[App Server A]
             end
 
             subgraph PrivateDBA[Private DB Subnet A]
@@ -37,8 +44,12 @@ flowchart TB
                 ALB_B[ALB Node B]
             end
 
+            subgraph PrivateWebB[Private Web Subnet B]
+                WebB[Web Server B<br/>Nginx]
+            end
+
             subgraph PrivateAppB[Private App Subnet B]
-                EC2B[EC2 App Server B<br/>Nginx]
+                AppB[App Server B]
             end
 
             subgraph PrivateDBB[Private DB Subnet B]
@@ -62,14 +73,19 @@ flowchart TB
     ALB --> ALB_A
     ALB --> ALB_B
 
-    ALB_A --> EC2A
-    ALB_B --> EC2B
+    ALB_A --> WebA
+    ALB_B --> WebB
 
-    EC2A --> RDSA
-    EC2B --> RDSA
+    WebA --> AppA
+    WebB --> AppB
 
-    EC2A --> CW
-    EC2B --> CW
+    AppA --> RDSA
+    AppB --> RDSA
+
+    WebA --> CW
+    WebB --> CW
+    AppA --> CW
+    AppB --> CW
     ALB --> CW
     RDSA --> CW
     RDSB --> CW
