@@ -2,6 +2,11 @@
 - 프로젝트 개설
 - 디렉토리 구성 및 모듈화
 - tier-3 도식 수정
+- VPC / subnet / IGW / NATGW(eip) 추가
+
+260515 (금)
+- network (vpc, subnet)
+- security group
 
 ```mermaid
 flowchart TB

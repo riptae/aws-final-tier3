@@ -33,3 +33,8 @@ variable "private_app_subnet_cidrs" {
 variable "private_db_subnet_cidrs" {
   type = list(string)
 }
+
+variable "my_ip_cidr" {
+  type        = string
+  description = "MY IP for SSH ACCESS"
+}

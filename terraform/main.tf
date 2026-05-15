@@ -13,3 +13,13 @@ module "network" {
 
   common_tags = local.common_tags
 }
+
+module "security" {
+  source = "../modules/security"
+
+  vpc_id      = module.network.vpc_id
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+  my_ip_cidr  = var.my_ip_cidr
+
+}
