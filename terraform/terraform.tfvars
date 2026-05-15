@@ -1,0 +1,30 @@
+project_name = "tier3-observability"
+env          = "dev"
+aws_region   = "ap-northeast-2"
+
+vpc_cidr = "10.7.0.0/16"
+
+azs = [
+  "ap-northeast-2a",
+  "ap-northeast-2c"
+]
+
+public_subnet_cidrs = [
+  "10.7.1.0/24",
+  "10.7.2.0/24"
+]
+
+private_web_subnet_cidrs = [
+  "10.7.11.0/24",
+  "10.7.12.0/24"
+]
+
+private_app_subnet_cidrs = [
+  "10.7.21.0/24",
+  "10.7.22.0/24"
+]
+
+private_db_subnet_cidrs = [
+  "10.7.31.0/24",
+  "10.7.32.0/24"
+]
