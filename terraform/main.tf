@@ -23,3 +23,23 @@ module "security" {
   my_ip_cidr  = var.my_ip_cidr
 
 }
+
+module "compute" {
+  source = "../modules/compute"
+
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  ami_id        = var.ami_id
+  instance_type = var.instance_type
+  public_subnet_id = module.network.public_subnet_ids[0]
+
+  private_web_subnet_ids = module.network.private_web_subnet_ids
+
+  parivate_app_subnet_ids = module.network.private_app_subnet_ids
+
+  bastion_sg_id = module.security.bastion_sg_id
+  web_sg_id     = module.security.web_sg_id
+  app_sg_id     = module.security.app_sg_id
+
+}

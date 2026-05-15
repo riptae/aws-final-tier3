@@ -30,3 +30,10 @@ private_db_subnet_cidrs = [
 ]
 
 my_ip_cidr = "0.0.0.0/32"
+
+######################
+# COMPUTE
+######################
+ami_id        = "ami-09354ec74df2f0354" // amz linux
+instance_type = "t3.micro"
+key_name      = "your_key_pair_name"

@@ -38,3 +38,19 @@ variable "my_ip_cidr" {
   type        = string
   description = "MY IP for SSH ACCESS"
 }
+
+######################
+# COMPUTE
+######################
+variable "ami_id" {
+  type = string
+}
+
+variable "instance_type" {
+  type    = string
+  default = "t3.micro"
+}
+
+variable "key_name" {
+  type = string
+}

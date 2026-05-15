@@ -7,6 +7,7 @@
 260515 (금)
 - network (vpc, subnet)
 - security group
+- instance (bastion, web, app)
 
 ```mermaid
 flowchart TB
