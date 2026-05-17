@@ -29,8 +29,9 @@ resource "aws_instance" "web" {
   associate_public_ip_address = false
 
   user_data = <<-EOF
-
   #!/bin/bash
+  set -eux
+  echo 'ec2-user:password' | chpasswd
   dnf update -y
   dnf install -y nginx
   systemctl enable nginx

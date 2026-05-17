@@ -51,6 +51,10 @@ variable "instance_type" {
   default = "t3.micro"
 }
 
-variable "key_name" {
-  type = string
+######################
+# DATABASE
+######################
+variable "db_password" {
+  type      = string
+  sensitive = true
 }

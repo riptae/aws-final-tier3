@@ -30,8 +30,8 @@ module "compute" {
   name_prefix = local.name_prefix
   common_tags = local.common_tags
 
-  ami_id        = var.ami_id
-  instance_type = var.instance_type
+  ami_id           = var.ami_id
+  instance_type    = var.instance_type
   public_subnet_id = module.network.public_subnet_ids[0]
 
   private_web_subnet_ids = module.network.private_web_subnet_ids
@@ -42,4 +42,28 @@ module "compute" {
   web_sg_id     = module.security.web_sg_id
   app_sg_id     = module.security.app_sg_id
 
+}
+
+module "alb" {
+  source = "../modules/alb"
+
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  vpc_id            = module.network.vpc_id
+  public_subnet_ids = module.network.public_subnet_ids
+
+  alb_sg_id        = module.security.alb_sg_id
+  web_instance_ids = module.compute.web_instance_ids
+
+}
+
+module "database" {
+  source      = "../modules/database"
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  private_db_subnet_ids = module.network.private_db_subnet_ids
+  db_sg_id              = module.security.db_sg_id
+  db_password           = var.db_password
 }
