@@ -67,3 +67,18 @@ module "database" {
   db_sg_id              = module.security.db_sg_id
   db_password           = var.db_password
 }
+
+module "monitoring" {
+  source = "../modules/monitoring"
+
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  notification_email = var.notification_email
+
+  alb_arn_suffix          = module.alb.alb_arn_suffix
+  target_group_arn_suffix = module.alb.target_group_arn_suffix
+  web_instance_ids        = module.compute.web_instance_ids
+  app_instance_ids        = module.compute.app_instance_ids
+  db_instance_id = module.database.db_instance_id
+}
