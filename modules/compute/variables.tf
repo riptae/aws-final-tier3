@@ -12,7 +12,7 @@ variable "ami_id" {
 
 variable "instance_type" {
   type = string
-  default = "t3.mirco"
+  default = "t3.nano"
 }
 
 

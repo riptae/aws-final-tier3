@@ -8,6 +8,12 @@
 - network (vpc, subnet)
 - security group
 - instance (bastion, web, app)
+- ALB
+
+260520 (수)
+- DB
+- MONITORING
+- DASHBOARD
 
 ```mermaid
 flowchart TB

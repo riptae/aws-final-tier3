@@ -12,6 +12,31 @@ resource "aws_sns_topic_subscription" "email" {
   endpoint = var.notification_email
 }
 
+# ALB Target Response Time Alarm
+#########################
+resource "aws_cloudwatch_metric_alarm" "alb_target_response_time_high" {
+  alarm_name          = "${var.name_prefix}-alb-target-response-time-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "TargetResponseTime"
+  namespace           = "AWS/ApplicationELB"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 1
+  alarm_description   = "ALB target response time is higher than 1 second"
+
+  dimensions = {
+    LoadBalancer = var.alb_arn_suffix
+    TargetGroup  = var.target_group_arn_suffix
+  }
+
+  alarm_actions = [aws_sns_topic.alarm.arn]
+  ok_actions    = [aws_sns_topic.alarm.arn]
+
+  tags = var.common_tags
+}
+
+
 #########################
 # ALB 5XX Alarm
 #########################
@@ -159,6 +184,30 @@ resource "aws_cloudwatch_metric_alarm" "rds_storage_low" {
 
     alarm_actions = [aws_sns_topic.alarm.arn]
   ok_actions = [aws_sns_topic.alarm.arn]
+
+  tags = var.common_tags
+}
+
+#########################
+# RDS Database Connections Alarm
+#########################
+resource "aws_cloudwatch_metric_alarm" "rds_connections_high" {
+  alarm_name          = "${var.name_prefix}-rds-connections-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "DatabaseConnections"
+  namespace           = "AWS/RDS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 50
+  alarm_description   = "RDS database connections are high"
+
+  dimensions = {
+    DBInstanceIdentifier = var.db_instance_id
+  }
+
+  alarm_actions = [aws_sns_topic.alarm.arn]
+  ok_actions    = [aws_sns_topic.alarm.arn]
 
   tags = var.common_tags
 }

@@ -80,5 +80,20 @@ module "monitoring" {
   target_group_arn_suffix = module.alb.target_group_arn_suffix
   web_instance_ids        = module.compute.web_instance_ids
   app_instance_ids        = module.compute.app_instance_ids
+  db_instance_id          = module.database.db_instance_id
+}
+
+module "dashboard" {
+  source = "../modules/dashboard"
+
+  name_prefix = local.name_prefix
+  aws_region  = var.aws_region
+
+  alb_arn_suffix          = module.alb.alb_arn_suffix
+  target_group_arn_suffix = module.alb.target_group_arn_suffix
+
+  web_instance_ids = module.compute.web_instance_ids
+  app_instance_ids = module.compute.app_instance_ids
+
   db_instance_id = module.database.db_instance_id
 }
