@@ -1,0 +1,14 @@
+variable "name_prefix" {
+  type = string
+}
+
+variable "common_tags" {
+  type = map(string)
+  default = {}
+}
+
+variable "alb_dns_name" {
+  type = string
+}
+
+

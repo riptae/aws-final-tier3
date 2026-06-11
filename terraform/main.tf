@@ -58,42 +58,12 @@ module "alb" {
 
 }
 
-module "database" {
-  source      = "../modules/database"
-  name_prefix = local.name_prefix
-  common_tags = local.common_tags
-
-  private_db_subnet_ids = module.network.private_db_subnet_ids
-  db_sg_id              = module.security.db_sg_id
-  db_password           = var.db_password
-}
-
-module "monitoring" {
-  source = "../modules/monitoring"
+module "cdn" {
+  source = "../modules/cdn"
 
   name_prefix = local.name_prefix
   common_tags = local.common_tags
 
-  notification_email = var.notification_email
+  alb_dns_name = module.alb.alb_dns_name
 
-  alb_arn_suffix          = module.alb.alb_arn_suffix
-  target_group_arn_suffix = module.alb.target_group_arn_suffix
-  web_instance_ids        = module.compute.web_instance_ids
-  app_instance_ids        = module.compute.app_instance_ids
-  db_instance_id          = module.database.db_instance_id
-}
-
-module "dashboard" {
-  source = "../modules/dashboard"
-
-  name_prefix = local.name_prefix
-  aws_region  = var.aws_region
-
-  alb_arn_suffix          = module.alb.alb_arn_suffix
-  target_group_arn_suffix = module.alb.target_group_arn_suffix
-
-  web_instance_ids = module.compute.web_instance_ids
-  app_instance_ids = module.compute.app_instance_ids
-
-  db_instance_id = module.database.db_instance_id
 }
