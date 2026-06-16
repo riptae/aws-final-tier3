@@ -12,7 +12,7 @@ resource "aws_lb" "this" {
 }
 
 resource "aws_lb_target_group" "web" {
-  name = "${var.name_prefix}-web-tg"
+  name = "${var.name_prefix}-web-tg"  
   port = 80
   protocol = "HTTP"
   vpc_id = var.vpc_id

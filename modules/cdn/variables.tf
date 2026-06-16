@@ -10,5 +10,3 @@ variable "common_tags" {
 variable "alb_dns_name" {
   type = string
 }
-
-

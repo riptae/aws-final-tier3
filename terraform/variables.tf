@@ -62,3 +62,15 @@ variable "db_password" {
 variable "notification_email" {
   type = string
 }
+
+######################
+# Route53
+######################
+variable "domain_name" {
+  type = string
+}
+
+variable "app_subdomain" {
+  type = string
+  default = "app"
+}

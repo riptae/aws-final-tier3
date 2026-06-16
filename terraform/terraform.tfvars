@@ -46,3 +46,8 @@ db_password = "Password123!"
 # MONITORING
 ######################
 notification_email = "fruitunion1143@gmail.com"
+
+######################
+# DNS
+######################
+domain_name = "test-test-test.example.com"
