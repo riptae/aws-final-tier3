@@ -15,6 +15,9 @@
 - MONITORING
 - DASHBOARD
 
+260616 (화)
+- cloudfront + alb 연결
+
 ```mermaid
 flowchart TB
     User[User Browser]
