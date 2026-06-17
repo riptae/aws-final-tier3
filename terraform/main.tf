@@ -66,4 +66,46 @@ module "cdn" {
 
   alb_dns_name = module.alb.alb_dns_name
 
+  aliases = [
+    var.record_name
+  ]
+
+  aws_acm_certificate_arn = aws_acm_certificate_validation.this.certificate_arn
+
+}
+
+module "dns_alias" {
+  source = "../modules/dns_alias"
+  route53_zone_id = var.route53_zone_id
+  record_name = var.record_name
+  
+  cloudfront_domain_name = module.cdn.cloudfront_domain_name
+  cloudfront_hosted_zone_id = module.cdn.cloudfront_hosted_zone_id
+}
+
+module "acm" {
+  source = "../modules/acm"
+  
+  domain_name = var.record_name
+  subject_alternative_names = []
+
+  common_tags = local.common_tags
+  name_prefix = local.name_prefix
+
+  providers = {
+    aws = aws.us_east_1
+  }
+}
+
+module "dns_validation" {
+  source = "../modules/dns_validation"
+
+  route53_zone_id = var.route53_zone_id
+  domain_validation_options = module.acm.domain_validation_options
+}
+
+resource "aws_acm_certificate_validation" "this" {
+  provider = aws.us_east_1
+  certificate_arn = module.acm.certificate_arn
+  validation_record_fqdns = module.dns_validation.validation_record_fqdns
 }

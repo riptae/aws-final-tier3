@@ -66,11 +66,16 @@ variable "notification_email" {
 ######################
 # Route53
 ######################
-variable "domain_name" {
+variable "route53_zone_id" {
   type = string
 }
 
-variable "app_subdomain" {
+variable "domain_name" {
   type = string
-  default = "app"
+  default = "example.com"
+}
+
+variable "record_name" {
+  type = string
+  default = "www.example.com"
 }

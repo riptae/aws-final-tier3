@@ -4,18 +4,15 @@ variable "name_prefix" {
 
 variable "common_tags" {
   type = map(string)
-  default = {}
+  default = {}    
 }
 
-variable "alb_dns_name" {
+variable "domain_name" {
   type = string
 }
 
-variable "aliases" {
+variable "subject_alternative_names" {
   type = list(string)
   default = []
 }
 
-variable "aws_acm_certificate_arn" {
-  type = string
-}

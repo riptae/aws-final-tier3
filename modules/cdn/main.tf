@@ -3,6 +3,8 @@ resource "aws_cloudfront_distribution" "this" {
   is_ipv6_enabled = true
   comment         = "${var.name_prefix}-cloudfront"
 
+  aliases = var.aliases
+
   origin {
     domain_name = var.alb_dns_name
     origin_id   = local.origin_id
@@ -26,7 +28,10 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    # cloudfront_default_certificate = true
+    acm_certificate_arn = var.aws_acm_certificate_arn
+    ssl_support_method = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 
   restrictions {
