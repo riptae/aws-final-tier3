@@ -50,4 +50,4 @@ notification_email = "fruitunion1143@gmail.com"
 ######################
 # DNS
 ######################
-domain_name = "test-test-test.example.com"
+domain_name = "aws-tier3-test-yun.shop"

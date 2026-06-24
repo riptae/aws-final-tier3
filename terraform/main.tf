@@ -58,6 +58,46 @@ module "alb" {
 
 }
 
+module "dns_alias" {
+  source = "../modules/dns_alias"
+
+  route53_zone_id = module.hosted_zone.zone_id
+  record_name     = var.record_name
+
+  cloudfront_domain_name    = module.cdn.cloudfront_domain_name
+  cloudfront_hosted_zone_id = module.cdn.cloudfront_hosted_zone_id
+}
+
+module "acm" {
+  source = "../modules/acm"
+
+  common_tags = local.common_tags
+  name_prefix = local.name_prefix
+
+  domain_name               = var.domain_name
+  subject_alternative_names = []
+
+  providers = {
+    aws = aws.us_east_1
+  }
+}
+
+// DNS 검증용 CNAME 레코드를 Route53 Hosted Zone에 생성
+module "dns_validation" {
+  source = "../modules/dns_validation"
+
+  domain_validation_options = module.acm.domain_validation_options // 검증용 DNS정보
+  route53_zone_id           = module.hosted_zone.zone_id           // 생성위치
+
+}
+
+// cloudfront에 tls certificate (arn) 삽입
+resource "aws_acm_certificate_validation" "this" {
+  provider                = aws.us_east_1
+  certificate_arn         = module.acm.certificate_arn
+  validation_record_fqdns = module.dns_validation.validation_record_fqdns
+}
+
 module "cdn" {
   source = "../modules/cdn"
 
@@ -70,42 +110,16 @@ module "cdn" {
     var.record_name
   ]
 
+  // acm이 아닌 aws_acm_certificate_validation output임
   aws_acm_certificate_arn = aws_acm_certificate_validation.this.certificate_arn
 
 }
 
-module "dns_alias" {
-  source = "../modules/dns_alias"
-  route53_zone_id = var.route53_zone_id
-  record_name = var.record_name
-  
-  cloudfront_domain_name = module.cdn.cloudfront_domain_name
-  cloudfront_hosted_zone_id = module.cdn.cloudfront_hosted_zone_id
-}
+module "hosted_zone" {
+  source = "../modules/hosted_zone"
 
-module "acm" {
-  source = "../modules/acm"
-  
-  domain_name = var.record_name
-  subject_alternative_names = []
-
-  common_tags = local.common_tags
   name_prefix = local.name_prefix
+  common_tags = local.common_tags
 
-  providers = {
-    aws = aws.us_east_1
-  }
-}
-
-module "dns_validation" {
-  source = "../modules/dns_validation"
-
-  route53_zone_id = var.route53_zone_id
-  domain_validation_options = module.acm.domain_validation_options
-}
-
-resource "aws_acm_certificate_validation" "this" {
-  provider = aws.us_east_1
-  certificate_arn = module.acm.certificate_arn
-  validation_record_fqdns = module.dns_validation.validation_record_fqdns
+  domain_name = var.domain_name
 }

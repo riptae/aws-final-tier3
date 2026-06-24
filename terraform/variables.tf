@@ -66,16 +66,13 @@ variable "notification_email" {
 ######################
 # Route53
 ######################
-variable "route53_zone_id" {
-  type = string
-}
 
 variable "domain_name" {
-  type = string
-  default = "example.com"
+  type    = string
+  default = "aws-tier3-test-yun.shop"
 }
 
 variable "record_name" {
-  type = string
-  default = "www.example.com"
+  type    = string
+  default = "aws-tier3-test-yun.shop"
 }
