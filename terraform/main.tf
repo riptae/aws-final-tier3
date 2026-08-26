@@ -58,6 +58,15 @@ module "alb" {
 
 }
 
+module "hosted_zone" {
+  source = "../modules/hosted_zone"
+
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  domain_name = var.domain_name
+}
+
 module "dns_alias" {
   source = "../modules/dns_alias"
 
@@ -115,11 +124,3 @@ module "cdn" {
 
 }
 
-module "hosted_zone" {
-  source = "../modules/hosted_zone"
-
-  name_prefix = local.name_prefix
-  common_tags = local.common_tags
-
-  domain_name = var.domain_name
-}
