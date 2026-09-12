@@ -5,3 +5,7 @@
 *.tfstate
 *.tfstate.*
 .terraform.lock.hcl
+# Generated PDFs, diagrams, conversation exports and temporary files
+/output/
+/artifacts/
+/tmp/
