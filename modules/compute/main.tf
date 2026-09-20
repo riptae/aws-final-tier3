@@ -3,12 +3,14 @@
 #############################
 
 resource "aws_instance" "bastion" {
-  ami = var.ami_id
-  instance_type = var.instance_type
+
   subnet_id = var.public_subnet_id
   vpc_security_group_ids = [var.bastion_sg_id]
   associate_public_ip_address = true
 
+  ami = var.ami_id
+  instance_type = var.instance_type
+  
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-bastion"
     Role = "bastion"
@@ -27,17 +29,35 @@ resource "aws_instance" "web" {
   vpc_security_group_ids = [var.web_sg_id]
   
   associate_public_ip_address = false
-
   user_data = <<-EOF
   #!/bin/bash
-  set -eux
-  echo 'ec2-user:password' | chpasswd
-  dnf update -y
-  dnf install -y nginx
-  systemctl enable nginx
-  systemctl start nginx
-  echo "WEB SERVER ${count.index + 1}" > /usr/share/nginx/html/index.html
-  EOF
+set -eu
+
+echo 'ec2-user:password' | chpasswd
+
+set -x
+dnf update -y
+dnf install -y nginx
+systemctl enable --now nginx
+echo "WEB SERVER ${count.index + 1}" > /usr/share/nginx/html/index.html
+
+# SSH 서비스 시작 및 부팅 시 자동 실행
+systemctl enable --now sshd
+
+# 기존 설정보다 먼저 읽히도록 비밀번호 인증 설정
+mkdir -p /etc/ssh/sshd_config.d
+echo 'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/00-password-auth.conf
+
+# 위 설정 파일을 가장 먼저 읽도록 지정
+sed -i '1i Include /etc/ssh/sshd_config.d/00-password-auth.conf' /etc/ssh/sshd_config
+ 
+# 문법 검사 후 설정 반영
+sshd -t
+systemctl reload sshd
+
+# 적용 결과 확인
+sshd -T | grep '^passwordauthentication'
+EOF
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-web-${count.index + 1}"
