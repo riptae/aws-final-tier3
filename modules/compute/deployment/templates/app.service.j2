@@ -1,0 +1,19 @@
+// EC2 Systemd에게 Springboot를 어떻게 실행할지 알려줌 
+[Unit]
+Description=Tier3 Spring Boot API
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple // 주 서비스로 관리
+User=tier3app
+Group=tier3app
+WorkingDirectory=/opt/tier3-app
+EnvironmentFile=/opt/tier3-app/app.env
+ExecStart=/usr/bin/java -jar /opt/tier3-app/app.jar --server.port={{ app_port }} --server.address=0.0.0.0
+Restart=on-failure
+RestartSec=5
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

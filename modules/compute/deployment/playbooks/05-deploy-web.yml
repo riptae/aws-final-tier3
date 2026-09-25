@@ -1,0 +1,42 @@
+---
+# 02 완료 후 실행. 실제 화면 파일은 Bastion의 artifacts/web/에 준비한다.
+- name: Web 화면 배포
+  hosts: web
+  become: true
+  any_errors_fatal: true
+  vars:
+    web_source_dir: "{{ playbook_dir }}/../artifacts/web"   
+  pre_tasks:
+    - name: Bastion 화면 파일 확인
+      ansible.builtin.stat:
+        path: "{{ web_source_dir }}/index.html"
+      delegate_to: localhost
+      become: false
+      register: web_source
+
+    - name: 화면 준비 검사
+      ansible.builtin.assert:
+        that:
+          - web_source.stat.isreg | default(false)
+          - web_source.stat.size | default(0) | int > 0
+        fail_msg: Bastion의 artifacts/web/에 실제 index.html과 JS/CSS를 준비하세요.
+
+    - name: Nginx 실행 확인
+      ansible.builtin.command: systemctl is-active nginx
+      changed_when: false
+
+  tasks:
+    - name: 정적 화면 배포
+      ansible.builtin.copy:
+        src: "{{ web_source_dir }}/"
+        dest: /usr/share/nginx/html/
+        owner: root
+        group: root
+        mode: '0644'
+        directory_mode: '0755'
+
+    # 정적 파일 변경은 reload가 필요하지 않다.
+    - name: 첫 페이지 응답 확인
+      ansible.builtin.uri:
+        url: http://127.0.0.1/
+        status_code: 200

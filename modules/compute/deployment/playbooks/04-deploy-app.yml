@@ -1,0 +1,94 @@
+---
+# 03 완료 후 실행. JAR 빌드와 DB 초기화는 이 단계에서 수행하지 않는다.
+- name: Spring Boot 앱 배포
+  hosts: app
+  become: true
+  any_errors_fatal: true
+  vars:
+    artifact_dir: "{{ playbook_dir }}/../artifacts"
+    app_port: 8080
+    app_health_path: /api/health
+  pre_tasks:
+    - name: Bastion의 배포 파일 확인
+      ansible.builtin.stat:
+        path: "{{ artifact_dir }}/{{ item }}"
+      loop: [app.jar, app.env]
+      register: app_sources
+      delegate_to: localhost
+      become: false
+
+    - name: 배포 파일 준비 검사
+      ansible.builtin.assert:
+        that:
+          - item.stat.isreg | default(false)
+          - item.stat.size | default(0) | int > 0
+        fail_msg: Bastion의 artifacts/에 app.jar와 DB 연결 설정 app.env를 준비하세요.
+      loop: "{{ app_sources.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: 03 단계 완료 확인
+      ansible.builtin.stat:
+        path: /opt/tier3-app
+      register: app_directory
+
+    - name: App 디렉터리 검사
+      ansible.builtin.assert:
+        that: app_directory.stat.isdir | default(false)
+        fail_msg: 먼저 03-setup-app.yml을 실행하세요.
+
+  tasks:
+    - name: JAR 배포
+      ansible.builtin.copy:
+        src: "{{ artifact_dir }}/app.jar"
+        dest: /opt/tier3-app/app.jar
+        owner: root
+        group: tier3app
+        mode: '0640'
+      notify: Restart app
+
+    - name: 환경 설정 배포
+      ansible.builtin.copy:
+        src: "{{ artifact_dir }}/app.env"
+        dest: /opt/tier3-app/app.env
+        owner: root
+        group: root
+        mode: '0600'
+      no_log: true
+      notify: Restart app
+
+    - name: 서비스 등록
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../templates/app.service.j2"
+        dest: /etc/systemd/system/tier3-app.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart app
+
+    - name: 변경 사항 적용
+      ansible.builtin.meta: flush_handlers
+
+    - name: 서비스 실행
+      ansible.builtin.systemd_service:
+        name: tier3-app
+        daemon_reload: true
+        enabled: true
+        state: started
+
+    - name: API 정상 응답 대기
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_port }}{{ app_health_path }}"
+        status_code: 200
+      register: app_health
+      until: app_health.status | default(0) == 200
+      retries: 30
+      delay: 5
+
+  handlers:
+    - name: Restart app
+      ansible.builtin.systemd_service:
+        name: tier3-app
+        daemon_reload: true
+        enabled: true
+        state: restarted

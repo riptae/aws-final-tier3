@@ -1,0 +1,64 @@
+---
+- name: Web Nginx 및 App 프록시 준비
+  hosts: web
+  become: true
+  any_errors_fatal: true
+  vars:
+    app_port: 8080
+  tasks:
+    - name: App Inventory 존재 확인
+      ansible.builtin.assert:
+        that:
+          - groups.get('app', []) | length > 0
+        fail_msg: Nginx upstream을 만들려면 App 서버가 필요합니다.
+
+    - name: Nginx 설치
+      ansible.builtin.dnf:
+        name: nginx
+        state: present
+
+    # 배포 전 진입 확인용 경로. 향후 서비스 index.html을 덮어쓰지 않는다.
+    - name: Web 배포 확인용 정적 페이지 생성
+      ansible.builtin.copy:
+        dest: /usr/share/nginx/html/deploy-check.html
+        mode: '0644'
+        content: |
+          <!doctype html>
+          <html lang="ko">
+          <meta charset="utf-8">
+          <title>Web 배포 확인</title>
+          <h1>{{ inventory_hostname }} Nginx 배포 완료</h1>
+          <p>/api/ 요청은 App:{{ app_port }}으로 전달됩니다.</p>
+          </html>
+
+    - name: Nginx 전체 설정 검사 후 배포
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../templates/nginx.conf.j2"
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: '0644'
+        backup: true
+        validate: /usr/sbin/nginx -t -c %s
+      notify: Reload nginx
+
+    - name: Nginx 자동 시작 및 실행
+      ansible.builtin.systemd_service:
+        name: nginx
+        enabled: true
+        state: started
+
+    - name: 설정 변경 즉시 적용
+      ansible.builtin.meta: flush_handlers
+
+    # 정적 응답 검증이며 App API/DB 연결 검증은 아니다.
+    - name: Web 정적 페이지 응답 확인
+      ansible.builtin.uri:
+        url: http://127.0.0.1/deploy-check.html
+        status_code: 200
+
+  handlers:
+    - name: Reload nginx
+      ansible.builtin.systemd_service:
+        name: nginx
+        state: reloaded

@@ -1,0 +1,28 @@
+---
+# 범위: 미들웨어와 프록시 준비. JAR 배포 / DB 초기화는 별도 구현한다.
+- name: Web 및 App 최초 부팅 완료 확인
+  hosts: web:app
+  become: true
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: SSH 및 대상 Python 연결 대기
+      ansible.builtin.wait_for_connection:
+        timeout: 600
+
+    - name: User data 완료 대기 (최대 20분)
+      ansible.builtin.command: cloud-init status --wait
+      async: 1200
+      poll: 10
+      changed_when: false
+
+    - name: 대상 운영체제 정보 수집
+      ansible.builtin.setup:
+
+    - name: Amazon Linux 2023 확인
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['distribution'] == 'Amazon'
+          - ansible_facts['distribution_major_version'] == '2023'
+        fail_msg: 이 Playbook은 Amazon Linux 2023용입니다.
+
