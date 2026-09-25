@@ -1,11 +1,20 @@
-output "alb_dns_name" {
-  value = module.alb.alb_dns_name
+output "bastion_public_ip" {
+  value = module.compute.bastion_public_ip
 }
 
-output "cloudfront_domain_name" {
-  value = module.cdn.cloudfront_domain_name
+output "web_private_ips" {
+  value = module.compute.web_private_ips
 }
 
-output "route53_name_servers" {
-  value = module.hosted_zone.name_servers
+output "app_private_ips" {
+  value = module.compute.app_private_ips
+}
+
+output "db_address" {
+  description = "MySQL hostname without port"
+  value       = module.database.db_address
+}
+
+output "db_port" {
+  value = module.database.db_port
 }

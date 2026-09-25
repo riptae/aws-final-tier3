@@ -40,7 +40,7 @@ instance_type = "t3.micro"
 ######################
 # DATABASE
 ######################
-db_password = "Password123!"
+db_password = ""
 
 ######################
 # MONITORING

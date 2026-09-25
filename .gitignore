@@ -9,3 +9,5 @@
 /output/
 /artifacts/
 /tmp/
+**/target/
+**/app.env
