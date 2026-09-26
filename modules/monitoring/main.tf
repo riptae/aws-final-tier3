@@ -1,3 +1,4 @@
+# 1. 장애 발생 / 정상 복구 알림을 전달할 SNS Topic
 resource "aws_sns_topic" "alarm" {
   name = "${var.name_prefix}-alarm-topic"
 
@@ -6,205 +7,38 @@ resource "aws_sns_topic" "alarm" {
   })
 }
 
+# 2. 이메일 구독: 수신한 확인 메일에서 구독을 승인해야 함
 resource "aws_sns_topic_subscription" "email" {
   topic_arn = aws_sns_topic.alarm.arn
-  protocol = "email"
-  endpoint = var.notification_email
+  protocol  = "email"
+  endpoint  = var.notification_email
 }
 
-# ALB Target Response Time Alarm
-#########################
-resource "aws_cloudwatch_metric_alarm" "alb_target_response_time_high" {
-  alarm_name          = "${var.name_prefix}-alb-target-response-time-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "TargetResponseTime"
-  namespace           = "AWS/ApplicationELB"
-  period              = 60
-  statistic           = "Average"
-  threshold           = 1
-  alarm_description   = "ALB target response time is higher than 1 second"
+# 3. Nginx 중지 → ALB HTTP 헬스 체크 실패 → 비정상 대상 감지
+# 헬스 체크 경로와 실패 횟수는 ALB 모듈의 대상 그룹에서 설정함.
+resource "aws_cloudwatch_metric_alarm" "web_unhealthy" {
+  alarm_name        = "${var.name_prefix}-web-unhealthy"
+  alarm_description = "Web target unhealthy: check ALB target health and Nginx on Web instances."
+
+  namespace   = "AWS/ApplicationELB"
+  metric_name = "UnHealthyHostCount"
 
   dimensions = {
     LoadBalancer = var.alb_arn_suffix
     TargetGroup  = var.target_group_arn_suffix
   }
 
-  alarm_actions = [aws_sns_topic.alarm.arn]
-  ok_actions    = [aws_sns_topic.alarm.arn]
-
-  tags = var.common_tags
-}
-
-
-#########################
-# ALB 5XX Alarm
-#########################
-resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
-  alarm_name = "${var.name_prefix}-alb-5xx-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods = 1 
-  metric_name = "HTTPCode_ELB_5XX_Count"
-  namespace = "AWS/ApplicationELB"
-  period = 60
-  statistic = "Sum"
-  threshold = 5
-  alarm_description = "ALB 5XX errors are high"
-
-  dimensions = {
-    LoadBalancer = var.alb_arn_suffix
-  }
-
-  alarm_actions = [aws_sns_topic.alarm.arn]
-  ok_actions = [aws_sns_topic.alarm.arn]
-
-  tags = var.common_tags
-
-}
-
-#########################
-# Target 5XX Alarm
-#########################
-resource "aws_cloudwatch_metric_alarm" "target_5xx" {
-  alarm_name = "${var.name_prefix}-target-5xx-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods = 1
-  metric_name = "HTTPCode_Target_5XX_Count"
-  namespace = "AWS/ApplicationELB"
-  period = 60
-  statistic = "Sum"
-  threshold = 5
-  alarm_description = "Target 5XX errors are high"
-
-  dimensions = {
-    LoadBalancer = var.alb_arn_suffix
-    TargetGroup = var.target_group_arn_suffix
-  }
-
-  alarm_actions = [aws_sns_topic.alarm.arn]
-  ok_actions = [aws_sns_topic.alarm.arn]
-
-  tags = var.common_tags
-}
-
-#########################
-# Web EC2 CPU Alarm
-#########################
-resource "aws_cloudwatch_metric_alarm" "web_cpu_high" {
-    count = length(var.web_instance_ids)
-
-    alarm_name = "${var.name_prefix}-web-${count.index + 1}-cpu-high"
-    comparison_operator = "GreaterThanThreshold"
-    evaluation_periods = 2
-    metric_name = "CPUUtilization"
-    namespace = "AWS/EC2"
-    period = 60
-    statistic = "Average"
-    threshold = 80
-    alarm_description = "Web EC2 CPU Utiliztion is high"
-    
-    dimensions = {
-      InstanceId = var.web_instance_ids[count.index]
-    }
-
-    alarm_actions = [aws_sns_topic.alarm.arn]
-    ok_actions = [aws_sns_topic.alarm.arn]
-
-    tags = var.common_tags
-  
-}
-
-#########################
-# APP EC2 Alarm
-#########################
-resource "aws_cloudwatch_metric_alarm" "app_cpu_high" {
-  count = length(var.app_instance_ids)
-
-  alarm_name = "${var.name_prefix}-app-${count.index + 1}-cpu-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods = 2
-  metric_name = "CPUUtilization"
-  namespace = "AWS/EC2"
-  period = 60
-  statistic = "Average"
-  threshold = 80
-  alarm_description = "APP EC2 CPU Utilization is high"
-
-  dimensions = {
-    InstanceId = var.app_instance_ids[count.index]
-  }
-
-  alarm_actions = [aws_sns_topic.alarm.arn]
-  ok_actions = [aws_sns_topic.alarm.arn]
-
-  tags = var.common_tags
-}
-
-#########################
-# RDS CPU Alarm
-#########################
-resource "aws_cloudwatch_metric_alarm" "rds_cpu_high" {
-  alarm_name = "${var.name_prefix}-rds-cpu-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods = 2
-  metric_name = "CPUUtilization"
-  namespace = "AWS/RDS"
-  period = 60
-  statistic = "Average"
-  threshold = 80
-  alarm_description = "RDS CPU Utilization is high"
-
-  dimensions = {
-    DBInstanceIdentifier = var.db_instance_id
-  }
-
-  alarm_actions = [aws_sns_topic.alarm.arn]
-  ok_actions = [aws_sns_topic.alarm.arn]
-
-  tags = var.common_tags
-}
-
-#########################
-# RDS FreeStorageSpace Alarm
-#########################
-resource "aws_cloudwatch_metric_alarm" "rds_storage_low" {
-  alarm_name = "${var.name_prefix}-rds-storage-low"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods = 1
-  metric_name = "FreeStorageSpace"
-  namespace = "AWS/RDS"
-  period = 300
-  statistic = "Average"
-  threshold = 5000000000
-  alarm_description = "RDS free storage is lower than 5GB"
-
-  dimensions = {
-    DBInstanceIdentifier = var.db_instance_id
-  }
-
-    alarm_actions = [aws_sns_topic.alarm.arn]
-  ok_actions = [aws_sns_topic.alarm.arn]
-
-  tags = var.common_tags
-}
-
-#########################
-# RDS Database Connections Alarm
-#########################
-resource "aws_cloudwatch_metric_alarm" "rds_connections_high" {
-  alarm_name          = "${var.name_prefix}-rds-connections-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "DatabaseConnections"
-  namespace           = "AWS/RDS"
+  # AWS 권장: 모든 ALB 노드에서 비정상이 관측되는지 Minimum으로 확인.
+  # 1분 구간 두 번 연속으로 비정상 대상이 1개 이상이면 ALARM.
+  statistic           = "Minimum"
   period              = 60
-  statistic           = "Average"
-  threshold           = 50
-  alarm_description   = "RDS database connections are high"
+  evaluation_periods  = 2
+  datapoints_to_alarm = 2
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  threshold           = 1
 
-  dimensions = {
-    DBInstanceIdentifier = var.db_instance_id
-  }
+  # 데이터 부재를 정상이나 장애로 간주하지 않음.
+  treat_missing_data = "missing"
 
   alarm_actions = [aws_sns_topic.alarm.arn]
   ok_actions    = [aws_sns_topic.alarm.arn]

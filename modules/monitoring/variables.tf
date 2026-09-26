@@ -18,14 +18,3 @@ variable "target_group_arn_suffix" {
   type = string
 }
 
-variable "web_instance_ids" {
-  type = list(string)
-}
-
-variable "app_instance_ids" {
-  type = list(string)
-}
-
-variable "db_instance_id" {
-  type = string
-}

@@ -1,3 +1,28 @@
+# ALB: 브라우저 HTTP 접속 및 Web 대상 헬스 체크
+resource "aws_security_group" "alb_sg" {
+  name        = "${var.name_prefix}-alb-sg"
+  description = "Public HTTP access to ALB"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-alb-sg"
+  })
+}
+
 ########################
 # DB
 ########################
@@ -52,6 +77,14 @@ resource "aws_security_group" "web_sg" {
   name        = "${var.name_prefix}-web-sg"
   description = "WEB SG"
   vpc_id      = var.vpc_id
+
+  # ALB의 사용자 요청 및 헬스 체크 허용
+  ingress {
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
+  }
 
   ingress {
     from_port       = 80

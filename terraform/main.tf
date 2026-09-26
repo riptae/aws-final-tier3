@@ -75,3 +75,39 @@ module "database" {
   db_username           = "admin"
   db_password           = var.db_password
 }
+
+# 5. Public ALB → Private Web A / B
+module "alb" {
+  source = "../modules/alb"
+
+  name_prefix       = local.name_prefix
+  common_tags       = local.common_tags
+  vpc_id            = module.network.vpc_id
+  public_subnet_ids = module.network.public_subnet_ids
+  alb_sg_id         = module.security.alb_sg_id
+  web_instance_ids  = module.compute.web_instance_ids
+
+  depends_on = [module.network]
+}
+
+# 6. Nginx 장애 감지 → SNS 이메일 알림
+module "monitoring" {
+  source = "../modules/monitoring"
+
+  name_prefix             = local.name_prefix
+  common_tags             = local.common_tags
+  notification_email      = var.notification_email
+  alb_arn_suffix          = module.alb.alb_arn_suffix
+  target_group_arn_suffix = module.alb.target_group_arn_suffix
+}
+
+# 7. 정상 / 비정상 Web 수와 알람 상태 시각화
+module "dashboard" {
+  source = "../modules/dashboard"
+
+  name_prefix             = local.name_prefix
+  aws_region              = var.aws_region
+  alb_arn_suffix          = module.alb.alb_arn_suffix
+  target_group_arn_suffix = module.alb.target_group_arn_suffix
+  web_unhealthy_alarm_arn = module.monitoring.web_unhealthy_alarm_arn
+}
