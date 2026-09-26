@@ -1,3 +1,12 @@
+# 0. Public Hosted Zone: 생성된 NS를 Cafe24에 등록한 뒤 인증서/CDN 연결
+module "hosted_zone" {
+  source = "../modules/hosted_zone"
+
+  domain_name = var.domain_name
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+}
+
 ########################################
 # 1. Network
 ########################################
@@ -110,4 +119,56 @@ module "dashboard" {
   alb_arn_suffix          = module.alb.alb_arn_suffix
   target_group_arn_suffix = module.alb.target_group_arn_suffix
   web_unhealthy_alarm_arn = module.monitoring.web_unhealthy_alarm_arn
+}
+
+# 8. CloudFront용 ACM 인증서: us-east-1에서 요청
+module "acm" {
+  source = "../modules/acm"
+
+  providers = {
+    aws = aws.us_east_1
+  }
+
+  name_prefix               = local.name_prefix
+  common_tags               = local.common_tags
+  domain_name               = var.domain_name
+  subject_alternative_names = var.record_name == var.domain_name ? [] : [var.record_name]
+}
+
+# 9. Hosted Zone에 ACM DNS 검증 CNAME 생성
+module "dns_validation" {
+  source = "../modules/dns_validation"
+
+  route53_zone_id           = module.hosted_zone.zone_id
+  domain_validation_options = module.acm.domain_validation_options
+}
+
+# Cafe24의 NS 위임이 반영되어 공개 DNS에서 CNAME이 조회되어야 완료됨.
+# CloudFront에는 발급 완료를 확인한 인증서 ARN을 전달한다.
+resource "aws_acm_certificate_validation" "this" {
+  provider = aws.us_east_1
+
+  certificate_arn         = module.acm.certificate_arn
+  validation_record_fqdns = module.dns_validation.validation_record_fqdns
+}
+
+# 10. HTTPS CloudFront → HTTP ALB → Web → App
+module "cdn" {
+  source = "../modules/cdn"
+
+  name_prefix             = local.name_prefix
+  common_tags             = local.common_tags
+  alb_dns_name            = module.alb.alb_dns_name
+  aliases                 = [var.record_name]
+  aws_acm_certificate_arn = aws_acm_certificate_validation.this.certificate_arn
+}
+
+# 11. 서비스 도메인 A Alias → CloudFront
+module "dns_alias" {
+  source = "../modules/dns_alias"
+
+  route53_zone_id           = module.hosted_zone.zone_id
+  record_name               = var.record_name
+  cloudfront_domain_name    = module.cdn.cloudfront_domain_name
+  cloudfront_hosted_zone_id = module.cdn.cloudfront_hosted_zone_id
 }
