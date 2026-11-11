@@ -15,8 +15,8 @@ To do list 앱이 가동될 인프라를 AWS 3-TIER로 구성. Ansible로 배포
 - B : ALB에서 RDS까지 (3-tier)
 - C : Cloudwatch -> Gmail Alarm
 
-<img width="70%"  alt="image" src="https://github.com/user-attachments/assets/07c5baa5-014e-4a99-a92b-1950ba0c7a65" />
-
+<img width="80%" alt="3-tier_simple" src="https://github.com/user-attachments/assets/ae140fc6-0ea5-40e1-9ad2-bb71569d3eb8" />
+<br>
 modules에 리소스를 작성<br>
 main.tf에 최소 NW + WEB(nginx dummy page) 만 불러오고, apply하는 것으로 리소스를 더해나갔다.
 
