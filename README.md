@@ -1,4 +1,5 @@
 ### 목적
+https://going2alaska.tistory.com/614
 To do list 앱이 가동될 인프라를 AWS 3-TIER로 구성. Ansible로 배포하고 테스트하였다.
 목적은 다음과 같다.
 
